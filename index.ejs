@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Notes</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice-to-Text Notes</h1>
+        <button id="start-recording">Start Recording</button>
+
+        <!-- Update form to remove action and method -->
+        <form id="note-form">
+            <textarea id="note-text" name="text" placeholder="Your voice note will appear here..." required></textarea>
+            <button type="submit">Save Note</button>
+        </form>
+
+        <a href="/savedNotes" class="view-notes">📋 View Saved Notes</a>
+    </div>
+
+    <script>
+        const button = document.getElementById("start-recording");
+        const textArea = document.getElementById("note-text");
+        const form = document.getElementById("note-form");
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+
+        button.addEventListener("click", () => {
+            recognition.start();
+        });
+
+        recognition.onresult = (event) => {
+            textArea.value = event.results[0][0].transcript;
+        };
+
+        // Handle form submission with AJAX
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault(); // Prevent default form submission
+
+            const text = textArea.value.trim();
+            if (!text) {
+                alert("❌ Note cannot be empty!");
+                return;
+            }
+
+            try {
+                const response = await fetch("/save", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("✅ Note saved successfully!");
+                    textArea.value = ""; // Clear input field
+                } else {
+                    alert("❌ Error: " + data.error);
+                }
+            } catch (error) {
+                alert("❌ Server error! Try again.");
+                console.error("Error saving note:", error);
+            }
+        });
+    </script>
+</body>
+</html>

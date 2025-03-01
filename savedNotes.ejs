@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Notes</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function enableEditing(id) {
+            let note = document.getElementById("note-" + id);
+            note.removeAttribute("readonly");
+            note.focus();
+        }
+
+        function saveEdit(id) {
+            let note = document.getElementById("note-" + id);
+            let updatedText = note.value;
+
+            fetch(`/edit/${id}`, { 
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: updatedText })
+            })
+            .then(() => window.location.reload()) // Reload page after editing
+            .catch(err => console.error("Error editing note:", err));
+        }
+
+        function deleteNote(id) {
+            fetch(`/delete/${id}`, { method: "POST" })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload(); // Reload page after deletion
+                    } else {
+                        console.error("Error deleting note");
+                    }
+                })
+                .catch(err => console.error("Error deleting note:", err));
+        }
+
+        function copyToClipboard(id) {
+            let note = document.getElementById("note-" + id);
+            navigator.clipboard.writeText(note.value)
+                .then(() => alert("Copied to clipboard!"))
+                .catch(err => console.error("Error copying note:", err));
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>📑 Saved Notes</h1>
+        <div id="savedNotes">
+            <% notes.forEach((note, index) => { %>
+                <div class="note-container">
+                    <span><%= index + 1 %>.</span>
+                    <input type="text" id="note-<%= index %>" value="<%= note.text %>" readonly>
+                    <span class="edit-icon" onclick="enableEditing(<%= index %>)">✏️</span>
+                    <span class="copy-icon" onclick="copyToClipboard(<%= index %>)">📋</span>
+                    <span class="delete-icon" onclick="deleteNote('<%= note._id %>')">🗑️</span>
+
+                </div>
+            <% }); %>
+        </div>
+        
+        <a href="/" class="back-button">🔙 Back to Home</a>
+    </div>
+</body>
+</html>
